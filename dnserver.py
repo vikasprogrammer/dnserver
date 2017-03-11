@@ -133,7 +133,7 @@ class Resolver(ProxyResolver):
             logger.info('2nd error code %s', response.header.rcode)
 
         if response.header.rcode != 0:
-            super().__init__('ns1.cmslauncher.asia', 53, 5)
+            super().__init__('124.6.61.2', 53, 5)
             response = super().resolve(request, handler)
             logger.info('3rd error code %s', response.header.rcode)
 
@@ -148,7 +148,7 @@ class Resolver(ProxyResolver):
             logger.info('5th error code %s', response.header.rcode)
 
         if response.header.rcode != 0:
-            super().__init__('ns2.cmslauncher.asia', 53, 5)
+            super().__init__('103.14.214.9', 53, 5)
             response = super().resolve(request, handler)
             logger.info('6th error code %s', response.header.rcode)
 
