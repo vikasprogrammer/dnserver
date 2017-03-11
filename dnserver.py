@@ -72,6 +72,9 @@ class Record:
     def sub_match(self, q):
         return self._rtype == QTYPE.SOA and q.qname.matchSuffix(self._rname)
 
+    def sub_match_ns(self, q):
+        return self._rtype == QTYPE.NS and q.qname.matchSuffix(self._rname)
+
     def __str__(self):
         return str(self.rr)
 
@@ -117,25 +120,29 @@ class Resolver(ProxyResolver):
     def resolve(self, request, handler):
         type_name = QTYPE[request.q.qtype]
         reply = request.reply()
-        for record in self.records:
-            if record.match(request.q):
-                reply.add_answer(record.rr)
-
-        if reply.rr:
-            logger.info('found zone for %s[%s], %d replies', request.q.qname, type_name, len(reply.rr))
-            return reply
-
-        # no direct zone so look for an SOA record for a higher level zone
-        for record in self.records:
-            if record.sub_match(request.q):
-                reply.add_answer(record.rr)
-
-        if reply.rr:
-            logger.info('found higher level SOA resource for %s[%s]', request.q.qname, type_name)
-            return reply
 
         logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
-        return super().resolve(request, handler)
+        
+        super().__init__(upstream, 53, 5)
+
+        response = super().resolve(request, handler)
+        logger.info('error code %s', response.header.rcode)
+        if response.header.rcode != 0:
+            super().__init__('ns1.cmslauncher.co.uk', 53, 5)
+            response = super().resolve(request, handler)
+            logger.info('2nd error code %s', response.header.rcode)
+
+        if response.header.rcode != 0:
+            super().__init__('ns2.cmslauncher.com', 53, 5)
+            response = super().resolve(request, handler)
+            logger.info('3rd error code %s', response.header.rcode)
+
+        if response.header.rcode != 0:
+            super().__init__('ns2.cmslauncher.co.uk', 53, 5)
+            response = super().resolve(request, handler)
+            logger.info('4th error code %s', response.header.rcode)
+
+        return response
 
 
 def handle_sig(signum, frame):
