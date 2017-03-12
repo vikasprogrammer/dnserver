@@ -139,6 +139,7 @@ class Resolver(ProxyResolver):
             super().__init__(upstream, 53, 5)
             response = super().resolve(request, handler)
         except KeyError:
+            upstream = self.nameservers[0]
             logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
             for upstream in self.nameservers:
                 super().__init__(upstream, 53, 5)
