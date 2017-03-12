@@ -2,8 +2,7 @@
 
 Simple DNS server written in python for use in development and testing.
 
-The DNS serves it's own records, if none are found it proxies the request to and upstream DNS server 
-eg. google at `8.8.8.8`.
+The DNS serves it's own records, if none are found it proxies the request to and upstream DNS servers one by one until a valid record is found.
 
 You can setup records you want to serve with a custom `zones.txt` file, 
 see [example_zones.txt](example_zones.txt) for the format.

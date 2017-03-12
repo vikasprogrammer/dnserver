@@ -132,10 +132,25 @@ class Resolver(ProxyResolver):
 
     def resolve(self, request, handler):
         type_name = QTYPE[request.q.qtype]
-        #reply = request.reply()
+        reply = request.reply()
+        for record in self.records:
+            if record.match(request.q):
+                reply.add_answer(record.rr)
 
-        # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
-        # pprint.pprint(request.header.id)
+        if reply.rr:
+            logger.info('found zone for %s[%s], %d replies', request.q.qname, type_name, len(reply.rr))
+            return reply
+
+        # no direct zone so look for an SOA record for a higher level zone
+        for record in self.records:
+            if record.sub_match(request.q):
+                reply.add_answer(record.rr)
+
+        if reply.rr:
+            logger.info('found higher level SOA resource for %s[%s]', request.q.qname, type_name)
+            return reply
+
+        logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
         
         #Cache nameservers
 
@@ -169,7 +184,7 @@ if __name__ == '__main__':
 
     port = int(os.getenv('PORT', 53))
     nameservers = os.getenv('NAMESERVERS', '8.8.8.8,8.8.4.4')
-    zone_file = Path(os.getenv('ZONE_FILE', '/zones/zones.txt'))
+    zone_file = Path(os.getenv('ZONE_FILE', './example_zones.txt'))
     resolver = Resolver(nameservers, zone_file)
     udp_server = DNSServer(resolver, port=port)
     tcp_server = DNSServer(resolver, port=port, tcp=True)
