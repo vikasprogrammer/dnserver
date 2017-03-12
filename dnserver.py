@@ -94,7 +94,7 @@ class Resolver(ProxyResolver):
     def __init__(self, nameservers, zone_file):
         # self.upstream = upstream
         # super().__init__(nameservers[0], 53, 5)
-        self.nameservers = nameservers
+        self.nameservers = nameservers.split(',')
         self.records = self.load_zones(zone_file)
 
     def zone_lines(self):
@@ -138,7 +138,7 @@ class Resolver(ProxyResolver):
         # pprint.pprint(request.header.id)
         
         #Cache nameservers
-        
+
         if cache[request.q.qname]:
             upstream = cache[request.q.qname]
             logger.info('cache hit upstream %s %s[%s]', upstream, request.q.qname, type_name)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, handle_sig)
 
     port = int(os.getenv('PORT', 53))
-    nameservers = os.getenv('NAMESERVERS', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk', 'ns1.cmslauncher.asia'])
+    nameservers = os.getenv('NAMESERVERS', '8.8.8.8,8.8.4.4')
     zone_file = Path(os.getenv('ZONE_FILE', '/zones/zones.txt'))
     resolver = Resolver(nameservers, zone_file)
     udp_server = DNSServer(resolver, port=port)
