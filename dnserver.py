@@ -126,12 +126,13 @@ class Resolver(ProxyResolver):
         #reply = request.reply()
 
         # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
-        pprint.pprint(request)
+        pprint.pprint(request.header.id)
 
         try:
             response = cache[request.q.qname]
             logger.info('cache hit %s[%s]', request.q.qname, type_name)
             pprint.pprint(response)
+            # response.id = request.q.id
         except KeyError:
             logger.info('cache miss %s[%s]', request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
