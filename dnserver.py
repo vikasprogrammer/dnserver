@@ -131,8 +131,8 @@ class Resolver(ProxyResolver):
         try:
             response = cache[request.q.qname]
             logger.info('cache hit %s[%s]', request.q.qname, type_name)
-            pprint.pprint(response)
-            # response.id = request.q.id
+            pprint.pprint(response.header.id)
+            response.header.id = request.header.id
         except KeyError:
             logger.info('cache miss %s[%s]', request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
