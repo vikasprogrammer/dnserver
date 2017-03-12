@@ -160,6 +160,9 @@ class Resolver(ProxyResolver):
                 response = super().resolve(request, handler)
                 logger.info('6th error code %s', response.header.rcode)
 
+            if response.header.rcode == 0:
+                cache[request.q.qname] = response
+
         return response
 
 
