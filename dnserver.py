@@ -49,7 +49,8 @@ TYPE_LOOKUP = {
 def returnfalse(key):
     return False
 
-cache = TTLCache(maxsize=256, ttl=60, missing=returnfalse)
+CACHETIMEOUT = 60*60*6 #6 hours
+cache = TTLCache(maxsize=256, ttl=CACHETIMEOUT, missing=returnfalse)
 
 class Record:
     def __init__(self, rname, rtype, args):
