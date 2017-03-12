@@ -12,6 +12,7 @@ from dnslib import DNSLabel, QTYPE, RR, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
 from cachetools import TTLCache
+import pprint
 
 cache = TTLCache(maxsize=256, ttl=60)
 
@@ -122,13 +123,15 @@ class Resolver(ProxyResolver):
 
     def resolve(self, request, handler):
         type_name = QTYPE[request.q.qtype]
-        reply = request.reply()
+        #reply = request.reply()
 
         # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
-        
+        pprint.pprint(request)
+
         try:
             response = cache[request.q.qname]
-            logger.info('cache miss %s[%s]', request.q.qname, type_name)
+            logger.info('cache hit %s[%s]', request.q.qname, type_name)
+            pprint.pprint(response)
         except KeyError:
             logger.info('cache miss %s[%s]', request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
