@@ -138,8 +138,7 @@ class Resolver(ProxyResolver):
         # pprint.pprint(request.header.id)
         
         #Cache nameservers
-        upstream = self.nameservers[0]
-
+        
         if cache[request.q.qname]:
             upstream = cache[request.q.qname]
             logger.info('cache hit upstream %s %s[%s]', upstream, request.q.qname, type_name)
@@ -147,15 +146,15 @@ class Resolver(ProxyResolver):
             response = super().resolve(request, handler)
         else:
             logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
-            for upstream in self.nameservers:
-                super().__init__(upstream, 53, 5)
+            for ns in self.nameservers:
+                super().__init__(ns, 53, 5)
                 response = super().resolve(request, handler)
-                logger.info('upstream %s header code %s', upstream, response.header.rcode)
+                logger.info('upstream %s header code %s', ns, response.header.rcode)
                 if response.header.rcode == 0:
                     break
 
             if response.header.rcode == 0:
-                cache[request.q.qname] = upstream
+                cache[request.q.qname] = ns
 
         return response
 
@@ -169,13 +168,13 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, handle_sig)
 
     port = int(os.getenv('PORT', 53))
-    upstream = os.getenv('UPSTREAM', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk', 'ns1.cmslauncher.asia'])
+    nameservers = os.getenv('NAMESERVERS', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk', 'ns1.cmslauncher.asia'])
     zone_file = Path(os.getenv('ZONE_FILE', '/zones/zones.txt'))
-    resolver = Resolver(upstream, zone_file)
+    resolver = Resolver(nameservers, zone_file)
     udp_server = DNSServer(resolver, port=port)
     tcp_server = DNSServer(resolver, port=port, tcp=True)
 
-    logger.info('starting DNS server on port %d, upstream DNS server "%s"', port, upstream)
+    logger.info('starting DNS server on port %d, upstream DNS servers "%s"', port, nameservers)
     udp_server.start_thread()
     tcp_server.start_thread()
 
