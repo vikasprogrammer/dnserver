@@ -141,7 +141,7 @@ class Resolver(ProxyResolver):
 
         except KeyError:
             logger.info('cache miss starting from the top %s %s[%s]', upstream, request.q.qname, type_name)
-            for upstream in self.nameservers
+            for upstream in self.nameservers:
                 super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('upstream %s header code %s', upstream, response.header.rcode)
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, handle_sig)
 
     port = int(os.getenv('PORT', 53))
-    upstream = os.getenv('UPSTREAM', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk'])
+    upstream = os.getenv('UPSTREAM', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk', 'ns1.cmslauncher.asia'])
     zone_file = Path(os.getenv('ZONE_FILE', '/zones/zones.txt'))
     resolver = Resolver(upstream, zone_file)
     udp_server = DNSServer(resolver, port=port)
