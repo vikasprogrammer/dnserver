@@ -129,12 +129,15 @@ class Resolver(ProxyResolver):
         pprint.pprint(request.header.id)
 
         try:
-            response = cache[request.q.qname]
-            logger.info('cache hit %s[%s]', request.q.qname, type_name)
-            pprint.pprint(response.header.id)
-            response.header.id = request.header.id
+            upstream = cache[request.q.qname]
+            logger.info('cache hit upstream %s %s[%s]', upstream, request.q.qname, type_name)
+            super().__init__(upstream, 53, 5)
+            response = super().resolve(request, handler)
+
+            # pprint.pprint(response.header.id)
+            # response.header.id = request.header.id
         except KeyError:
-            logger.info('cache miss %s[%s]', request.q.qname, type_name)
+            logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
 
             response = super().resolve(request, handler)
@@ -165,7 +168,7 @@ class Resolver(ProxyResolver):
                 logger.info('6th error code %s', response.header.rcode)
 
             if response.header.rcode == 0:
-                cache[request.q.qname] = response
+                cache[request.q.qname] = upstream
 
         return response
 
