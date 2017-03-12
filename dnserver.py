@@ -14,7 +14,9 @@ from dnslib.server import DNSServer
 from cachetools import TTLCache
 import pprint
 
-cache = TTLCache(maxsize=256, ttl=60)
+
+
+
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
@@ -43,6 +45,11 @@ TYPE_LOOKUP = {
     'SPF': (dns.TXT, QTYPE.TXT),
 }
 
+
+def returnfalse(key):
+    return False
+
+cache = TTLCache(maxsize=256, ttl=60, missing=returnfalse)
 
 class Record:
     def __init__(self, rname, rtype, args):
@@ -133,15 +140,19 @@ class Resolver(ProxyResolver):
         #Cache nameservers
         upstream = self.nameservers[0]
 
-        try:
-            hit = cache[request.q.qname]
-            upstream = hit
+        if cache[request.q.qname]:
+            upstream = cache[request.q.qname]
             logger.info('cache hit upstream %s %s[%s]', upstream, request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
             response = super().resolve(request, handler)
-        except KeyError:
+        else:
             logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
-            
+            for upstream in self.nameservers:
+                super().__init__(upstream, 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('upstream %s header code %s', upstream, response.header.rcode)
+                if response.header.rcode == 0:
+                    break
 
             if response.header.rcode == 0:
                 cache[request.q.qname] = upstream
