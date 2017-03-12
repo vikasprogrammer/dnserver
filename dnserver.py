@@ -85,6 +85,7 @@ class Record:
 
 class Resolver(ProxyResolver):
     def __init__(self, upstream, zone_file):
+        self.upstream = upstream
         super().__init__(upstream, 53, 5)
         self.records = self.load_zones(zone_file)
 
@@ -127,6 +128,8 @@ class Resolver(ProxyResolver):
 
         # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
         pprint.pprint(request.header.id)
+        
+        upstream = self.upstream
 
         try:
             upstream = cache[request.q.qname]
@@ -137,7 +140,7 @@ class Resolver(ProxyResolver):
             # pprint.pprint(response.header.id)
             # response.header.id = request.header.id
         except KeyError:
-            logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
+            logger.info('cache miss starting from the top %s %s[%s]', upstream, request.q.qname, type_name)
             super().__init__(upstream, 53, 5)
 
             response = super().resolve(request, handler)
