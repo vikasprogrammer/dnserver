@@ -84,9 +84,10 @@ class Record:
 
 
 class Resolver(ProxyResolver):
-    def __init__(self, upstream, zone_file):
-        self.upstream = upstream
-        super().__init__(upstream, 53, 5)
+    def __init__(self, nameservers, zone_file):
+        # self.upstream = upstream
+        # super().__init__(nameservers[0], 53, 5)
+        self.nameservers = nameservers
         self.records = self.load_zones(zone_file)
 
     def zone_lines(self):
@@ -129,7 +130,8 @@ class Resolver(ProxyResolver):
         # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
         # pprint.pprint(request.header.id)
         
-        upstream = self.upstream
+        #Cache nameservers
+        upstream = self.nameservers[0]
 
         try:
             upstream = cache[request.q.qname]
@@ -137,43 +139,14 @@ class Resolver(ProxyResolver):
             super().__init__(upstream, 53, 5)
             response = super().resolve(request, handler)
 
-            # pprint.pprint(response.header.id)
-            # response.header.id = request.header.id
         except KeyError:
             logger.info('cache miss starting from the top %s %s[%s]', upstream, request.q.qname, type_name)
-            super().__init__(upstream, 53, 5)
-
-            response = super().resolve(request, handler)
-            logger.info('error code %s', response.header.rcode)
-            if response.header.rcode != 0:
-                upstream = 'ns1.cmslauncher.co.uk'
+            for upstream in self.nameservers
                 super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
-                logger.info('2nd error code %s', response.header.rcode)
-
-            if response.header.rcode != 0:
-                upstream = 'ns1.cmslauncher.asia'
-                super().__init__(upstream, 53, 5)
-                response = super().resolve(request, handler)
-                logger.info('3rd error code %s', response.header.rcode)
-
-            if response.header.rcode != 0:
-                upstream = 'ns2.cmslauncher.com'
-                super().__init__(upstream, 53, 5)
-                response = super().resolve(request, handler)
-                logger.info('4th error code %s', response.header.rcode)
-
-            if response.header.rcode != 0:
-                upstream = 'ns2.cmslauncher.co.uk'
-                super().__init__(upstream, 53, 5)
-                response = super().resolve(request, handler)
-                logger.info('5th error code %s', response.header.rcode)
-
-            if response.header.rcode != 0:
-                upstream = 'ns2.cmslauncher.asia'
-                super().__init__(upstream, 53, 5)
-                response = super().resolve(request, handler)
-                logger.info('6th error code %s', response.header.rcode)
+                logger.info('upstream %s header code %s', upstream, response.header.rcode)
+                if response.header.rcode == 0:
+                    break
 
             if response.header.rcode == 0:
                 cache[request.q.qname] = upstream
@@ -190,7 +163,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, handle_sig)
 
     port = int(os.getenv('PORT', 53))
-    upstream = os.getenv('UPSTREAM', '8.8.8.8')
+    upstream = os.getenv('UPSTREAM', ['ns1.cmslauncher.com', 'ns1.cmslauncher.co.uk'])
     zone_file = Path(os.getenv('ZONE_FILE', '/zones/zones.txt'))
     resolver = Resolver(upstream, zone_file)
     udp_server = DNSServer(resolver, port=port)
