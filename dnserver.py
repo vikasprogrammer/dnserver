@@ -141,12 +141,7 @@ class Resolver(ProxyResolver):
             response = super().resolve(request, handler)
         except KeyError:
             logger.info('cache miss starting from the top %s[%s]', request.q.qname, type_name)
-            for upstream in self.nameservers:
-                super().__init__(upstream, 53, 5)
-                response = super().resolve(request, handler)
-                logger.info('upstream %s header code %s', upstream, response.header.rcode)
-                if response.header.rcode == 0:
-                    break
+            
 
             if response.header.rcode == 0:
                 cache[request.q.qname] = upstream
