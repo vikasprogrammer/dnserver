@@ -28,6 +28,10 @@ To run without docker (assuming you have `dnslib==0.9.7` and python 3.6 installe
 
     PORT=5053 ZONE_FILE='./example_zones.txt' ./dnserver.py
 
+To run without docker (with upstream nameservers):
+
+    PORT=5053 NAMESERVERS=8.8.8.8,8.8.4.4 ZONE_FILE='./example_zones.txt' ./dnserver.py
+
 You can then test (either of the above) with
 
 ```shell
