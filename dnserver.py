@@ -147,7 +147,7 @@ class Resolver(ProxyResolver):
             logger.info('error code %s', response.header.rcode)
             if response.header.rcode != 0:
                 upstream = 'ns1.cmslauncher.co.uk'
-                super().__init__(, 53, 5)
+                super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('2nd error code %s', response.header.rcode)
 
