@@ -127,7 +127,7 @@ class Resolver(ProxyResolver):
         #reply = request.reply()
 
         # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
-        pprint.pprint(request.header.id)
+        # pprint.pprint(request.header.id)
         
         upstream = self.upstream
 
@@ -146,27 +146,32 @@ class Resolver(ProxyResolver):
             response = super().resolve(request, handler)
             logger.info('error code %s', response.header.rcode)
             if response.header.rcode != 0:
-                super().__init__('ns1.cmslauncher.co.uk', 53, 5)
+                upstream = 'ns1.cmslauncher.co.uk'
+                super().__init__(, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('2nd error code %s', response.header.rcode)
 
             if response.header.rcode != 0:
-                super().__init__('124.6.61.2', 53, 5)
+                upstream = 'ns1.cmslauncher.asia'
+                super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('3rd error code %s', response.header.rcode)
 
             if response.header.rcode != 0:
-                super().__init__('ns2.cmslauncher.com', 53, 5)
+                upstream = 'ns2.cmslauncher.com'
+                super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('4th error code %s', response.header.rcode)
 
             if response.header.rcode != 0:
-                super().__init__('ns2.cmslauncher.co.uk', 53, 5)
+                upstream = 'ns2.cmslauncher.co.uk'
+                super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('5th error code %s', response.header.rcode)
 
             if response.header.rcode != 0:
-                super().__init__('103.14.214.9', 53, 5)
+                upstream = 'ns2.cmslauncher.asia'
+                super().__init__(upstream, 53, 5)
                 response = super().resolve(request, handler)
                 logger.info('6th error code %s', response.header.rcode)
 
