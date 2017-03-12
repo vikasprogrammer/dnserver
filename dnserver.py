@@ -11,6 +11,9 @@ from time import sleep
 from dnslib import DNSLabel, QTYPE, RR, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
+from cachetools import TTLCache
+
+cache = TTLCache(maxsize=256, ttl=60)
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
@@ -121,36 +124,41 @@ class Resolver(ProxyResolver):
         type_name = QTYPE[request.q.qtype]
         reply = request.reply()
 
-        logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
+        # logger.info('no local zone found, proxying %s[%s]', request.q.qname, type_name)
         
-        super().__init__(upstream, 53, 5)
+        try:
+            response = cache[request.q.qname]
+            logger.info('cache miss %s[%s]', request.q.qname, type_name)
+        except KeyError:
+            logger.info('cache miss %s[%s]', request.q.qname, type_name)
+            super().__init__(upstream, 53, 5)
 
-        response = super().resolve(request, handler)
-        logger.info('error code %s', response.header.rcode)
-        if response.header.rcode != 0:
-            super().__init__('ns1.cmslauncher.co.uk', 53, 5)
             response = super().resolve(request, handler)
-            logger.info('2nd error code %s', response.header.rcode)
+            logger.info('error code %s', response.header.rcode)
+            if response.header.rcode != 0:
+                super().__init__('ns1.cmslauncher.co.uk', 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('2nd error code %s', response.header.rcode)
 
-        if response.header.rcode != 0:
-            super().__init__('124.6.61.2', 53, 5)
-            response = super().resolve(request, handler)
-            logger.info('3rd error code %s', response.header.rcode)
+            if response.header.rcode != 0:
+                super().__init__('124.6.61.2', 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('3rd error code %s', response.header.rcode)
 
-        if response.header.rcode != 0:
-            super().__init__('ns2.cmslauncher.com', 53, 5)
-            response = super().resolve(request, handler)
-            logger.info('4th error code %s', response.header.rcode)
+            if response.header.rcode != 0:
+                super().__init__('ns2.cmslauncher.com', 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('4th error code %s', response.header.rcode)
 
-        if response.header.rcode != 0:
-            super().__init__('ns2.cmslauncher.co.uk', 53, 5)
-            response = super().resolve(request, handler)
-            logger.info('5th error code %s', response.header.rcode)
+            if response.header.rcode != 0:
+                super().__init__('ns2.cmslauncher.co.uk', 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('5th error code %s', response.header.rcode)
 
-        if response.header.rcode != 0:
-            super().__init__('103.14.214.9', 53, 5)
-            response = super().resolve(request, handler)
-            logger.info('6th error code %s', response.header.rcode)
+            if response.header.rcode != 0:
+                super().__init__('103.14.214.9', 53, 5)
+                response = super().resolve(request, handler)
+                logger.info('6th error code %s', response.header.rcode)
 
         return response
 
